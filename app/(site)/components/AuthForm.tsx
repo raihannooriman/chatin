@@ -6,6 +6,9 @@ import { useCallback, useState } from "react";
 import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
 import AuthSocialButton from "./AuthSocialButton";
 import { BsGoogle } from "react-icons/bs";
+import axios from "axios";
+import { toast } from "react-hot-toast";
+import { signIn } from "next-auth/react";
 
 type Variant = "LOGIN" | "REGISTER";
 
@@ -35,16 +38,40 @@ const AuthForm = () => {
   const onSubmit: SubmitHandler<FieldValues> = (data) => {
     setIsLoading(true);
     if (variant === "REGISTER") {
-      //axios register
+      axios
+        .post("/api/register", data)
+        .catch(() => toast.error("Ada kesalahan"))
+        .finally(() => setIsLoading(false));
     }
     if (variant === "LOGIN") {
-      //nextauth sigIn
+      signIn("credentials", {
+        ...data,
+        redirect: false,
+      })
+        .then((callback) => {
+          if (callback?.error) {
+            toast.error("Email atau password salah");
+          }
+          if (callback?.ok && !callback?.error) {
+            toast.success("Success");
+          }
+        })
+        .finally(() => setIsLoading(false));
     }
   };
 
   const socialAction = (action: string) => {
     setIsLoading(true);
-    //next social signIn
+    signIn(action, { redirect: false })
+      .then((callback) => {
+        if (callback?.error) {
+          toast.error("Ada kesalahan");
+        }
+        if (callback?.ok && !callback?.error) {
+          toast.success("Success");
+        }
+      })
+      .finally(() => setIsLoading(false));
   };
 
   return (
